@@ -44,19 +44,41 @@ class Heuristic():
 		self.size = self.world.get_size()
 		self.goal = goal
 
-	def est(self, loc):			# compute the heuristic estimate for a given location
-		return abs(self.goal[0] - loc[0]) + abs(self.goal[1] - loc[1])
-
 	def set_goal(self, goal): 	# helper fn
 		self.goal = goal
 
-class Heuristic_SqrtDist(Heuristic): 			#subclass Heuristic		
+	def est(self, loc):			# compute the heuristic estimate for a given location
+		return 0;
+
+class Heuristic_ManhattenDist(Heuristic): 			#subclass Heuristic		
+	def __init__(self, world, goal=None):
+		Heuristic.__init__(self, world, goal)
+
+	def est(self, loc):							#override with new estimate
+		return abs(self.goal[0] - loc[0]) + abs(self.goal[1] - loc[1])
+
+class Heuristic_PythagoreanDist(Heuristic): 			#subclass Heuristic		
 	def __init__(self, world, goal=None):
 		Heuristic.__init__(self, world, goal)
 
 	def est(self, loc):							#override with new estimate
 		idist = self.goal[0] - loc[0]; jdist = self.goal[1] - loc[1]
 		return math.sqrt( idist * idist + jdist * jdist )
+
+class Heuristic_HorizDist(Heuristic): 			#subclass Heuristic		
+	def __init__(self, world, goal=None):
+		Heuristic.__init__(self, world, goal)
+
+	def est(self, loc):							#override with new estimate
+		return abs( self.goal[0] - loc[0] )
+
+class Heuristic_VertDist(Heuristic): 			#subclass Heuristic		
+	def __init__(self, world, goal=None):
+		Heuristic.__init__(self, world, goal)
+
+	def est(self, loc):							#override with new estimate
+		return abs( self.goal[1] - loc[1] )
+
 
 class AStar():
 	def __init__(self, world, heuristic):
@@ -116,17 +138,29 @@ if __name__ == "__main__":
 	except IndexError:
 		print usage
 	try:
-		which_heuristic = sys.argv[2]
-		if which_heuristic not in [0, 1]: raise IndexError("invalid heuristic")
+		which_heuristic = int(sys.argv[2])
+		if which_heuristic not in (0, 1, 2, 3, 4): raise IndexError("invalid heuristic")
 	except IndexError:
+		print "which 0"
 		which_heuristic = 0
 
 	w = World(which_map)
 
 	if which_heuristic == 0:
-		h = Heuristic(w)
+		print "Heuristic: Manhatten distance"
+		h = Heuristic_ManhattenDist(w)
 	elif which_heuristic == 1:
-		h = Heuristic_SqrtDist(w)
+		print "Heuristic: Pythagorean distance"
+		h = Heuristic_PythagoreanDist(w)
+	elif which_heuristic == 2:
+		print "Heuristic: Horizontal distance"
+		h = Heuristic_HorizDist(w)
+	elif which_heuristic == 3:
+		print "Heuristic: Vertical distance"
+		h = Heuristic_VertDist(w)
+	elif which_heuristic == 4:
+		print "Heuristic: 0"
+		h = Heuristic(w)
 
 	a = AStar(w, h)
 	path, cost = a.search( (7, 0), (0, 9) )
