@@ -26,16 +26,18 @@ class BaeNode():
 		self.parent_nodes.append(parent)
 
 class BaeNet():
-	def __init__(self, file_name):
+	def __init__(self, file_name, show_dist=False):
 		self.node_names = []
 		self.nodes = []
+		self.show_dist = show_dist
 		file_lines = [ l for l in open(file_name).read().split('\n') if l and l[0] != "#" ]
 		for each in file_lines:
 			self.set_cpt(each, True)
 
 	def joint(self, node_names):
-		node_names = node_names[::-1]
+		node_names = self.sort_nodes(node_names)[::-1]
 		prod_arr = []
+		distprint = []
 		for i in range(len(node_names)):
 			consider = node_names[i:]
 			xi = consider[0] #x_i
@@ -48,44 +50,66 @@ class BaeNet():
 			key = ",".join(parents)
 			try:
 				cpt_val = node.cpt[key]
+				if key:
+					distprint.append( "P(%s|%s)"%(xi,key) )
+				else:
+					distprint.append( "P(%s)"%(xi) )
 				if xi.islower():
 					prod_arr.append(1-node.cpt[key])
 				else:
 					prod_arr.append(node.cpt[key])
 			except:
 				pass
-		print prod_arr
+		if self.show_dist:
+			print "= " + " * ".join( distprint )
+		 	print "= " + " * ".join( [ str(f) for f in prod_arr ] )
 		return prod(prod_arr)
 
-	def marginal(self, node_name):
-		try:
-			node_position = self.node_names.index( node_name.upper() )
-		except:
-			print "ERROR: malformed marginal"
-			print "should specify only one variable"
-			return
+	def marginal(self, node_names):
+		node_names = self.sort_nodes(node_names)
+		node_position = self.node_names.index( node_names[0].upper() )
 		sum_over = []
-		sum_over_nodes = self.get_all_parents(node_name.upper())
-		for i in range( len(sum_over_nodes) ** 2 ): #generate all permuataions of the parents
-			binrep = bin(i)[2:].zfill(len(sum_over_nodes))
-			perm = []
-			for j in range(len(sum_over_nodes)):
-				perm.append( (sum_over_nodes[j].lower() if binrep[j] == "1" else sum_over_nodes[j]) )
-			perm.insert( node_position, node_name )
-			print perm
-			sum_over.append( self.joint("".join(perm)) )
-		print sum_over
+		distprint = []
+		sum_over_nodes = [x for x in self.get_all_parents(node_names[-1].upper()) if x not in node_names.upper()]
+		if sum_over_nodes:
+			lsum = len(sum_over_nodes) ** 2 if len(sum_over_nodes) > 1 else 2
+			for i in range( lsum ): #generate all permuataions of the parents
+				binrep = bin(i)[2:].zfill(len(sum_over_nodes))
+				perm = []
+				for j in range(len(sum_over_nodes)):
+					perm.append( (sum_over_nodes[j].lower() if binrep[j] == "1" else sum_over_nodes[j]) )
+				perm.insert( node_position, node_names )
+				perm = "".join(perm)
+				print perm
+				if self.show_dist:
+					distprint.append(perm)
+					print "P(%s)"%(perm)
+				sum_over.append( self.joint(perm) )
+		else: #case where asking for marginal of a priori
+			distprint.append(node_names)
+			sum_over.append( self.joint(node_names) )
+		if self.show_dist:
+			print "P(%s)"%node_names
+			print "= " + " + ".join( [ "P(%s)"%perm for perm in distprint ] )
+			print "= " + " + ".join( [ str(f) for f in sum_over ] )
 		return sum(sum_over)
 
-	def conditional(self, node_names, conditioned_on):
-		return 
-		
-				
-	def get_all_parents(self, node_name):
+	def conditional(self, of, given):
+		print given + of
+		return self.marginal(given + of)/self.marginal(given)
+
+	def sort_nodes(self, node_names):
+		nodes = list(node_names)
 		try:
-			node = self.nodes[ self.node_names.index(node_name.upper()) ]
+			nodes.sort( key=lambda x: self.node_names.index(x.upper()) )
 		except:
-			return []
+			print "ERROR: bad request"
+			print "One of requested variables not found"
+			exit(-1)
+		return "".join(nodes)
+
+	def get_all_parents(self, node_name):
+		node = self.nodes[ self.node_names.index(node_name.upper()) ]
 		ret = []
 		stack = []
 		stack.extend(node.parent_nodes)
@@ -139,22 +163,28 @@ class BaeNet():
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("input_file", help="text file specification of the network")
+	parser.add_argument("-d", help="show distributions", action="store_true")
 	parser.add_argument("-c", help="conditional probability")
 	parser.add_argument("-j", help="joint probability")
 	parser.add_argument("-m", help="marginal probability")
 	parser.add_argument("-p", help="set a priori or a cpt table entry", nargs=2)
 	args = parser.parse_args()
 
-	net = BaeNet(args.input_file)
+	if args.d:
+		net = BaeNet(args.input_file, True)
+	else:
+		net = BaeNet(args.input_file)
 	
 	if args.p:
 		net.set_cpt(":".join(args.p))
 
 	if args.c:
-		print net.conditional(args.c)
+		c = args.c.split("/")
+		print net.conditional(c[0], c[1])
 
 	if args.j:
-		print net.joint(args.j)
+		print "P(%s)" % args.j
+		print "= %f" % net.joint(args.j)
 
 	if args.m:
-		print net.marginal(args.m)
+		print "= %f" % net.marginal(args.m)
