@@ -1,0 +1,12 @@
+#taken from 
+#http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-034-artificial-intelligence-fall-2010/tutorials/MIT6_034F10_tutor06.pdf
+H:0.05
+A:0.025
+S/h,a:0
+S/h,A:.8
+S/H,a:.3
+S/H,A:.86
+U/h:.1
+U/H:.5
+B/a:.15
+B/A:.3
