@@ -80,7 +80,6 @@ class BaeNet():
 					perm.append( (sum_over_nodes[j].lower() if binrep[j] == "1" else sum_over_nodes[j]) )
 				perm.insert( node_position, node_names )
 				perm = "".join(perm)
-				print perm
 				if self.show_dist:
 					distprint.append(perm)
 					print "P(%s)"%(perm)

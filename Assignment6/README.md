@@ -26,7 +26,7 @@ probability table of a node. A priori has no conditional dependencies (parents) 
 
 P:0.4
 
-A node with a conditional dependency is formatted:
+A node with a conditional dependency is formatted as below and should be interpreted P(C|P) = .2 and P(c|P) = .8 is automatically assumed. Only True probabilities should be specified. All complements are inferred.
 
 C/P:0.2
 
@@ -75,3 +75,25 @@ Computes P(S|X)
 `python baesnet.py baesnet.txt -d -m C`
 
 Adding the -d option will show the calculations involved.
+
+
+P(SPC)
+= P(C|P,S) * P(S) * P(P)
+= 0.05 * 0.3 * 0.1
+
+P(SpC)
+= P(C|S,p) * P(S) * P(p)
+= 0.03 * 0.3 * 0.9
+
+P(sPC)
+= P(C|P,s) * P(s) * P(P)
+= 0.02 * 0.7 * 0.1
+
+P(spC)
+= P(C|p,s) * P(s) * P(p)
+= 0.001 * 0.7 * 0.9
+
+P(C)
+= P(SPC) + P(SpC) + P(sPC) + P(spC)
+= 0.0015 + 0.0081 + 0.0014 + 0.00063
+= 0.011630
