@@ -94,7 +94,6 @@ class BaeNet():
 		return sum(sum_over)
 
 	def conditional(self, of, given):
-		print given + of
 		return self.marginal(given + of)/self.marginal(given)
 
 	def sort_nodes(self, node_names):
@@ -179,7 +178,7 @@ if __name__ == "__main__":
 
 	if args.c:
 		c = args.c.split("/")
-		print net.conditional(c[0], c[1])
+		print "P(%s)\n= %s" % (args.c, net.conditional(c[0], c[1]))
 
 	if args.j:
 		print "P(%s)" % args.j
